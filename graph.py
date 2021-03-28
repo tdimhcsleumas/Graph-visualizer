@@ -10,10 +10,11 @@ def drawTextCenter(text, surface, x, y):
 
 
 class Vertex:
-    def __init__(self, center, radius):
+    def __init__(self, center, radius, idx):
         self.center = center
         self.radius = radius
         self.color = (0, 0, 0)
+        self.idx = idx
 
     def draw(self, surface):
         pygame.draw.circle(surface, self.color, self.center, self.radius)
@@ -53,7 +54,7 @@ class Edge:
 class Graph(pygame.Rect):
     def __init__(self, x, y, width, height):
         super().__init__(x, y, width, height)
-        self.vertices = {}
+        self.vertices = []
         self.edges = []
 
     def setEdgeSet(self, edges):
@@ -63,7 +64,7 @@ class Graph(pygame.Rect):
         self.vertices = grid
 
     def insertItem(self, item):
-        self.vertices[id(item)] = item
+        self.vertices.append = item
 
     @classmethod
     def createFromJson(cls, data):
@@ -76,5 +77,5 @@ class Graph(pygame.Rect):
         for edge in self.edges:
             edge.draw(surface)
 
-        for _, v in self.vertices.items():
+        for v in self.vertices:
             v.draw(surface)

@@ -37,11 +37,11 @@ class DisjointSet:
 def solve(G: Graph, *args, **kwargs):
     F = set()
     D = DisjointSet()
-    for _, x in G.vertices.items():
+    for x in G.vertices:
         D.makeSet(x)
     for edge in sorted(G.edges, key=lambda x: x.weight):
-        time.sleep(1)
+        time.sleep(0.5)
         if D.findSet(edge.start) != D.findSet(edge.end):
             F.add(edge)
-            edge.setColor(BLUE)
+            edge.setColor(RED)
             D.union(edge.start, edge.end)

@@ -2,8 +2,8 @@ import pygame
 from graph import Graph, Vertex, Edge
 from random import randint
 from config import *
-from algorithms import kruskal
-from task_queue import TaskQueue
+from algorithms import kruskal, prim
+from concurrent.futures import ThreadPoolExecutor
 
 SIZE = (750, 750)
 
@@ -18,12 +18,15 @@ def makeGrid() -> tuple:
     vertices = {}
     edges = []
 
+    idx = 0
     for i in range(1, rows + 1):
         for j in range(1, columns + 1):
             vertex = Vertex(
                 (grid.x + stepX * i, grid.y + stepY * j),
-                radius
+                radius,
+                idx
             )
+            idx += 1
             if i != 1:
                 edges.append(Edge(vertex,
                                   vertices[i - 1, j],
@@ -37,20 +40,32 @@ def makeGrid() -> tuple:
             vertices[i, j] = vertex
 
     start = vertices[1, 1]
-    start.color = BLUE
-    grid.setVertexSet({id(v): v for _, v in vertices.items()})
+    grid.setVertexSet(list(vertices.values()))
     grid.setEdgeSet(edges)
 
     return grid, start
 
+class State:
+    def __init__(self):
+        self.running = False
+
+    def markStopped(self, *args, **kwargs):
+        self.running = False
+
+    def markStarted(self):
+        self.running = True
+
+    def isRunning(self):
+        return self.running
 
 def main():
     WIN = pygame.display.set_mode(SIZE)
     pygame.display.set_caption("RSMT Algorithm Visualizer")
     pygame.init()
 
-    task_queue = TaskQueue()
     grid, start = makeGrid()
+    task_queue = ThreadPoolExecutor(max_workers=1)
+    state = State()
 
     run = True
     while run:
@@ -62,7 +77,17 @@ def main():
         for event in pygame.event.get():
 
             if event.type == pygame.KEYDOWN:
-                task_queue.add_task(kruskal.solve, (grid), {})
+                if not state.isRunning():
+                    if event.key == pygame.K_r:
+                        grid, start = makeGrid()
+                    elif event.key == pygame.K_k:
+                        state.markStarted()
+                        task_queue.submit(kruskal.solve, grid).add_done_callback(state.markStopped)
+                    elif event.key == pygame.K_p:
+                        state.markStarted()
+                        task_queue.submit(prim.solve, grid, start).add_done_callback(state.markStopped)
+                else:
+                    print("currently running!")
 
             if event.type == pygame.QUIT:
                 run = False
